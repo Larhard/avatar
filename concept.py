@@ -5,6 +5,7 @@ import time
 import numpy as np
 import pyaudio
 from kivy.app import App
+from kivy.config import Config
 from kivy.clock import mainthread
 from kivy.core.image import Image
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
@@ -17,7 +18,13 @@ CHUNKSIZE = 2048
 RATE = 44100
 
 avatar = None
-volume = 0.7
+
+Config.read("concept.rc")
+Config.adddefaultsection("avatar")
+Config.setdefault("avatar", "volume", .5)
+Config.write()
+
+volume = Config.getfloat("avatar", "volume")
 
 figure = matplotlib.figure.Figure()
 lines = []
@@ -132,6 +139,12 @@ class VolumeSlider(Slider):
         self.value = volume
 
         self.bind(value=self.on_value_change)
+
+    def on_touch_up(self, touch):
+        super().on_touch_up(touch)
+
+        Config.set("avatar", "volume", volume)
+        Config.write()
 
     def on_value_change(self, instance, value):
         global volume
