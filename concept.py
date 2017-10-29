@@ -10,12 +10,14 @@ from kivy.core.image import Image
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Rectangle
+from kivy.uix.slider import Slider
 from kivy.uix.widget import Widget
 
 CHUNKSIZE = 2048
 RATE = 44100
 
 avatar = None
+volume = 0.7
 
 figure = matplotlib.figure.Figure()
 lines = []
@@ -30,7 +32,8 @@ FFT_CHUNK = 10 * CHUNKSIZE
 
 fftfreq = np.fft.fftfreq(FFT_CHUNK, d=RATE / CHUNKSIZE / 1000000)
 lines.extend(axs[1].plot(fftfreq[:FFT_CHUNK // 2], np.zeros(FFT_CHUNK // 2)))
-axs[1].set_ylim((0, 5))
+axs[1].plot([0, FFT_CHUNK], [1, 1], "r-")
+axs[1].set_ylim((0, 2))
 axs[1].set_xlim((0, 3000))
 
 
@@ -47,7 +50,7 @@ def plot(y):
 
     max_freq = fftfreq[np.argmax(fft[:FFT_CHUNK // 2])]
     max_freq_vol = fft[np.argmax(fft[:FFT_CHUNK // 2])]
-    if max_freq_vol > 2 and max_freq > 100:
+    if max_freq_vol > 1 and max_freq > 100:
         avatar.mouth = "open"
     else:
         avatar.mouth = "closed"
@@ -122,6 +125,19 @@ class ConceptApp(App):
     pass
 
 
+class VolumeSlider(Slider):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.value = volume
+
+        self.bind(value=self.on_value_change)
+
+    def on_value_change(self, instance, value):
+        global volume
+        volume = value
+
+
 def plotter():
     p = pyaudio.PyAudio()
     stream = p.open(
@@ -137,6 +153,7 @@ def plotter():
     while True:
         data = stream.read(CHUNKSIZE)
         numpydata = np.fromstring(data, dtype=np.float32)
+        numpydata *= volume
         # fft = np.abs(np.fft.fft(numpydata, n=10*CHUNKSIZE))
         # ifft = np.fft.ifft(fft)[:CHUNKSIZE]
         # stream.write(ifft.astype(np.float32).tostring())

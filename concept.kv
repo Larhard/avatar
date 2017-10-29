@@ -1,8 +1,15 @@
 BoxLayout:
     orientation: "horizontal"
 
-    Plot:
+    BoxLayout:
 #        width: 0
 #        size_hint_x: 0
+
+        orientation: "vertical"
+        VolumeSlider:
+            min: 0
+            max: 1
+            size_hint_y: None
+        Plot:
 
     Avatar:
