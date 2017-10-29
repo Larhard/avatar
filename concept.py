@@ -11,13 +11,16 @@ from kivy.core.image import Image
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
 from kivy.graphics.context_instructions import Color
 from kivy.graphics.vertex_instructions import Rectangle
+from kivy.properties import BooleanProperty
 from kivy.uix.slider import Slider
+from kivy.uix.switch import Switch
 from kivy.uix.widget import Widget
 
 CHUNKSIZE = 2048
 RATE = 44100
 
 avatar = None
+plot_widget = None
 
 Config.read("concept.rc")
 Config.adddefaultsection("avatar")
@@ -43,6 +46,8 @@ axs[1].plot([0, FFT_CHUNK], [1, 1], "r-")
 axs[1].set_ylim((0, 2))
 axs[1].set_xlim((0, 3000))
 
+plot_active = False
+
 
 @mainthread
 def plot(y):
@@ -51,9 +56,10 @@ def plot(y):
     fft = np.fft.fft(y, n=FFT_CHUNK)
     fft = np.sqrt(np.abs(fft))
 
-    lines[1].set_ydata(fft[:FFT_CHUNK // 2])
+    if plot_active:
+        lines[1].set_ydata(fft[:FFT_CHUNK // 2])
 
-    figure.canvas.draw()
+        figure.canvas.draw()
 
     max_freq = fftfreq[np.argmax(fft[:FFT_CHUNK // 2])]
     max_freq_vol = fft[np.argmax(fft[:FFT_CHUNK // 2])]
@@ -124,8 +130,25 @@ class Avatar(Widget):
 
 
 class Plot(FigureCanvasKivyAgg):
+    active = BooleanProperty(False)
+
     def __init__(self, *args, **kwargs):
         super().__init__(figure, *args, **kwargs)
+
+        global plot_widget
+        plot_widget = self
+
+
+class PlotSwitch(Switch):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.bind(active=self.on_active_change)
+
+    def on_active_change(self, instance, value):
+        global plot_active
+        plot_active = value
+        plot_widget.active = value
 
 
 class ConceptApp(App):

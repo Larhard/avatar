@@ -10,6 +10,10 @@ BoxLayout:
             min: 0
             max: 1
             size_hint_y: None
+        PlotSwitch:
+            text: "Plot"
+            size_hint_y: None
         Plot:
+            opacity: 1 if self.active else .1
 
     Avatar:
